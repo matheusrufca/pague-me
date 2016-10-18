@@ -21,9 +21,16 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 	$scope.chat = Chats.get($stateParams.chatId);
 })
 
-.controller('AccountCtrl', function ($scope) {
+.controller('AccountCtrl', function ($scope, $state, ngFB) {
 	$scope.settings = {
 		enableFriends: true
+	};
+
+
+	$scope.logout = function () {
+		ngFB.logout().then(function () {
+			$state.go('tab.login');
+		});
 	};
 })
 
