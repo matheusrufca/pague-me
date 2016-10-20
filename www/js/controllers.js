@@ -37,7 +37,7 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 	};
 })
 
-.controller('LoginController', function ($scope, $state, $ionicModal, $timeout, facebookAuthService) {
+.controller('LoginController', function ($scope, $state, $ionicModal, $timeout, facebookAuthService, firebaseAuthService) {
 	self.init = function () {
 		facebookAuthService.getLoginStatus().then(function (response) {
 			if (response.status === 'connected') {
@@ -46,33 +46,29 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 		});
 	};
 
-	//This method is executed when the user press the "Login with facebook" button
-	$scope.facebookSignIn = function () {
-		var callback = function (response) {
-			if (response.status === 'connected') {
-				console.log('Facebook login succeeded');
-				$state.go('tab.profile'); // go do dashboard
-			} else {
-				console.log('Facebook login failed');
-				alert('Facebook login failed');
-			};
-		}
 
-		facebookAuthService.login().then(callback); //login on facebook
+	$scope.login = function (authMethod) {
+		firebaseAuthService.facebookSignIn().then(function (response) {
+			console.log(JSON.stringify(response));
+		}).catch(function (response) {
+			console.log(JSON.stringify(response));
+		});
 	};
-
 
 
 	self.init();
 })
 
-.controller('ProfileController', function ($scope, ngFB) {
+.controller('ProfileController', function ($scope, ngFB, usersService) {
 	ngFB.api({
 		path: '/me',
 		params: { fields: 'id,name' }
 	}).then(
         function (user) {
         	$scope.user = user;
+
+        	usersService.addUser(user);
+        	console.log(JSON.stringify(user));
         },
         function (error) {
         	alert('Facebook error: ' + error.error_description);

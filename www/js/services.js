@@ -48,8 +48,6 @@ angular.module('starter.services', ['ngOpenFB'])
 		}
 	};
 })
-
-
 .service('facebookAuthService', ['ngFB', function (ngFB) {
 	var self = this;
 
@@ -80,9 +78,6 @@ angular.module('starter.services', ['ngOpenFB'])
 		});
 	};
 }])
-
-
-
 .service('facebookService', ['ngFB', function (ngFB) {
 	var self = this;
 
@@ -93,3 +88,70 @@ angular.module('starter.services', ['ngOpenFB'])
 		});
 	};
 }]);
+
+
+angular.module('dev', ['firebase'])
+	.constant('firebaseConfig', {
+		'url': "https://pague-me.firebaseio.com",
+		//'ref': new Firebase("https://pague-me.firebaseio.com")
+	})
+	.service('firebaseAuthService', ['firebaseConfig', '$firebaseAuth', function (firebaseConfig, $firebaseAuth) {
+		var self = this;
+		var auth = $firebaseAuth();
+
+		self.facebookSignIn = function () {
+			var dfSignIn = auth.$signInWithPopup("facebook");
+
+			dfSignIn.then(function (firebaseUser) {
+				console.log("Signed in as:", firebaseUser.uid);
+			}).catch(function (error) {
+				console.log("Authentication failed:", error);
+			});
+
+			return dfSignIn;
+		};
+	}])
+	.service('firebaseService', ['firebaseConfig', '$firebaseObject', '$firebaseArray', '$firebaseAuth', function (firebaseConfig, $firebaseObject, $firebaseArray, $firebaseAuth) {
+		var self = this;
+		//var ref = firebase.database().ref();
+		//var $firebaseObject = $firebaseObject(ref);
+
+
+		self.getCollection = function (collectionName) {
+			var ref = firebase.database().ref().child(collectionName);
+
+			return $firebaseArray(ref);
+		};
+	}]);
+
+
+
+
+angular.module('pague-me.services', ['dev'])
+	.service('usersService', ['firebaseService', function (firebaseService) {
+		var self = this;
+
+		function init() {
+			self.users = firebaseService.getCollection('users');
+		};
+
+
+
+		self.getUsers = function () {
+			self.users = firebaseService.getCollection('users');
+			return users;
+		};
+
+		self.addUser = function (user) {
+			self.users.$add(user);
+		};
+
+		self.removeUser = function (user) {
+			self.users.$remove(user);
+		};
+
+		init();
+	}]);
+
+
+
