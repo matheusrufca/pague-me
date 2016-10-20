@@ -37,19 +37,24 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 	};
 })
 
-.controller('LoginController', function ($scope, $state, $ionicModal, $timeout, facebookAuthService, firebaseAuthService) {
+.controller('LoginController', function ($scope, $state, $ionicModal, $timeout, firebaseAuthService, userService) {
 	self.init = function () {
-		facebookAuthService.getLoginStatus().then(function (response) {
-			if (response.status === 'connected') {
-				$state.go('tab.dash');
-			}
-		});
+		var isLoginNeeded = firebaseAuthService.isUserSignedIn()
+
+		if (!isLoginNeeded) {
+			$state.go('tab.dash'); //go to dashboard if user is logged in
+		}
 	};
+
+
+
 
 
 	$scope.login = function (authMethod) {
 		firebaseAuthService.facebookSignIn().then(function (response) {
 			console.log(JSON.stringify(response));
+			userService.addUser(response.user);
+			$state.go('tab.dash');
 		}).catch(function (response) {
 			console.log(JSON.stringify(response));
 		});
@@ -59,7 +64,7 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 	self.init();
 })
 
-.controller('ProfileController', function ($scope, ngFB, usersService) {
+.controller('ProfileController', function ($scope, ngFB, userService) {
 	ngFB.api({
 		path: '/me',
 		params: { fields: 'id,name' }
@@ -67,7 +72,7 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
         function (user) {
         	$scope.user = user;
 
-        	usersService.addUser(user);
+        	userService.addUser(user);
         	console.log(JSON.stringify(user));
         },
         function (error) {

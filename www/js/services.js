@@ -93,7 +93,7 @@ angular.module('starter.services', ['ngOpenFB'])
 angular.module('dev', ['firebase'])
 	.constant('firebaseConfig', {
 		'url': "https://pague-me.firebaseio.com",
-		//'ref': new Firebase("https://pague-me.firebaseio.com")
+		'ref': function () { return firebase.database().ref(); }
 	})
 	.service('firebaseAuthService', ['firebaseConfig', '$firebaseAuth', function (firebaseConfig, $firebaseAuth) {
 		var self = this;
@@ -104,12 +104,24 @@ angular.module('dev', ['firebase'])
 
 			dfSignIn.then(function (firebaseUser) {
 				console.log("Signed in as:", firebaseUser.uid);
+
+
+
+
+
 			}).catch(function (error) {
 				console.log("Authentication failed:", error);
 			});
 
 			return dfSignIn;
 		};
+
+		self.isUserSignedIn = function () {
+			var authData = auth.$getAuth();
+
+			return authData;
+		};
+
 	}])
 	.service('firebaseService', ['firebaseConfig', '$firebaseObject', '$firebaseArray', '$firebaseAuth', function (firebaseConfig, $firebaseObject, $firebaseArray, $firebaseAuth) {
 		var self = this;
@@ -118,7 +130,7 @@ angular.module('dev', ['firebase'])
 
 
 		self.getCollection = function (collectionName) {
-			var ref = firebase.database().ref().child(collectionName);
+			var ref = firebaseConfig.ref().child(collectionName);
 
 			return $firebaseArray(ref);
 		};
@@ -128,7 +140,14 @@ angular.module('dev', ['firebase'])
 
 
 angular.module('pague-me.services', ['dev'])
-	.service('usersService', ['firebaseService', function (firebaseService) {
+	.factory("User", function (firebaseService, UserFactory) {
+		var usersRef = firebaseService.getCollection("users");
+
+		return function (userid) {
+			return new usersRef.child(userid);
+		}
+	})
+	.service('userService', ['firebaseService', function (firebaseService) {
 		var self = this;
 
 		function init() {
