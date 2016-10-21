@@ -5,7 +5,7 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 	self.init = function () {
 		facebookAuthService.getLoginStatus().then(function (response) {
-			if (response.status === 'connected') {
+			if (response && response.status === 'connected') {
 				$scope.getFriends(); // get friends
 			} else {
 				$state.go('tab.login'); // the user isn't logged in to Facebook. go to login state
@@ -24,20 +24,23 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 })
 
 
-.controller('AccountCtrl', function ($scope, $state, facebookAuthService) {
+.controller('AccountCtrl', function ($rootScope, $scope, $state, firebaseAuthService) {
 	$scope.settings = {
 		enableFriends: true
 	};
 
 
-	$scope.logout = function () {
-		facebookAuthService.logout().then(function () {
+	$scope.signOut = function () {
+		firebaseAuthService.signOut().then(function () {
+			$rootScope.user = null;
+
 			$state.go('tab.login');
+
 		});
 	};
 })
 
-.controller('LoginController', function ($scope, $state, $ionicModal, $timeout, firebaseAuthService, userService) {
+.controller('LoginController', function ($rootScope, $scope, $state, $ionicModal, $timeout, firebaseAuthService, userService) {
 	self.init = function () {
 		var isLoginNeeded = firebaseAuthService.isUserSignedIn()
 
@@ -46,38 +49,59 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 		}
 	};
 
-
-
-
-
-	$scope.login = function (authMethod) {
+	$scope.signIn = function () {
 		firebaseAuthService.facebookSignIn().then(function (response) {
-			console.log(JSON.stringify(response));
-			userService.addUser(response.user);
 			$state.go('tab.dash');
+
+			console.debug(JSON.stringify(response));
 		}).catch(function (response) {
-			console.log(JSON.stringify(response));
+			console.debug(JSON.stringify(response));
 		});
-	};
+	};	
 
 
 	self.init();
 })
 
-.controller('ProfileController', function ($scope, ngFB, userService) {
-	ngFB.api({
-		path: '/me',
-		params: { fields: 'id,name' }
-	}).then(
-        function (user) {
-        	$scope.user = user;
+.controller('ProfileController', function ($scope, facebookAuthService, facebookAuthService, facebookService) {
 
-        	userService.addUser(user);
-        	console.log(JSON.stringify(user));
+	$scope.friends = [];
+
+
+	facebookAuthService.getLoginStatus();
+
+
+	function init() {
+		$scope.getProfile();
+	};
+
+
+	$scope.getProfile = function () {
+		facebookService.getProfile().then(
+        function (data) {
+        	$scope.user = data;
         },
         function (error) {
-        	alert('Facebook error: ' + error.error_description);
+        	console.warn('Facebook error: ' + error.error_description);
         });
+	};
+
+
+	$scope.getFriends = function () {
+		facebookService.getFriends().then(
+        function (data) {
+
+        	$scope.friends = data.friends.data;
+        },
+        function (error) {
+        	console.warn('Facebook error: ' + error.error_description);
+        });
+	};
+
+
+	
+
+	init();
 })
 
 

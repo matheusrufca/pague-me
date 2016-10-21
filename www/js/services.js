@@ -48,72 +48,56 @@ angular.module('starter.services', ['ngOpenFB'])
 		}
 	};
 })
-.service('facebookAuthService', ['ngFB', function (ngFB) {
-	var self = this;
-
-	self.login = function () {
-		return ngFB.login({ scope: 'user_friends' })
-	};
-
-	self.logout = function () {
-		return ngFB.logout();
-	};
-
-	self.getLoginStatus = function () {
-		return ngFB.getLoginStatus(function (response) {
-			if (response.status === 'connected') {
-				// the user is logged in and has authenticated your
-				// app, and response.authResponse supplies
-				// the user's ID, a valid access token, a signed
-				// request, and the time the access token 
-				// and signed request each expire
-				var uid = response.authResponse.userID;
-				var accessToken = response.authResponse.accessToken;
-			} else if (response.status === 'not_authorized') {
-				// the user is logged in to Facebook, 
-				// but has not authenticated your app
-			} else {
-				// the user isn't logged in to Facebook.
-			}
-		});
-	};
-}])
-.service('facebookService', ['ngFB', function (ngFB) {
-	var self = this;
-
-	self.getFriends = function () {
-		return ngFB.api({
-			path: '/me',
-			params: { fields: 'friends' }
-		});
-	};
-}]);
 
 
-angular.module('dev', ['firebase'])
+
+
+
+
+
+angular.module('pague-me.services', ['ngStorage', 'firebase'])
 	.constant('firebaseConfig', {
 		'url': "https://pague-me.firebaseio.com",
 		'ref': function () { return firebase.database().ref(); }
 	})
-	.service('firebaseAuthService', ['firebaseConfig', '$firebaseAuth', function (firebaseConfig, $firebaseAuth) {
+	.service('firebaseAuthService', ['$rootScope', 'firebaseConfig', '$firebaseAuth', function ($rootScope, firebaseConfig, $firebaseAuth) {
 		var self = this;
 		var auth = $firebaseAuth();
 
+
 		self.facebookSignIn = function () {
-			var dfSignIn = auth.$signInWithPopup("facebook");
+			var dfSignIn = auth.$signInWithPopup("facebook", { scope: "email,user_friends" });
 
 			dfSignIn.then(function (firebaseUser) {
-				console.log("Signed in as:", firebaseUser.uid);
+				var user = angular.extend(firebaseUser.user.toJSON(), firebaseUser.credential);
 
+				$rootScope.$broadcast('auth.stateChanged', user);
 
+				var a = [firebaseUser, auth.$getAuth()]
 
-
-
+				console.log(JSON.stringify(a));
 			}).catch(function (error) {
-				console.log("Authentication failed:", error);
+				console.warn("Authentication failed:", error);
 			});
 
 			return dfSignIn;
+		};
+
+		self.signOut = function () {
+			var dfSignOut;
+
+			dfSignOut = auth.$signOut();
+
+
+			dfSignOut.then(function (response) {
+				$rootScope.$broadcast('auth.stateChanged', null);
+			});
+
+			return dfSignOut;
+		};
+
+		self.getCurrentUser = function () {
+			return auth.$getAuth();
 		};
 
 		self.isUserSignedIn = function () {
@@ -122,6 +106,11 @@ angular.module('dev', ['firebase'])
 			return authData;
 		};
 
+
+		auth.$onAuthStateChanged(function (userContext) {
+			//do something
+		});
+
 	}])
 	.service('firebaseService', ['firebaseConfig', '$firebaseObject', '$firebaseArray', '$firebaseAuth', function (firebaseConfig, $firebaseObject, $firebaseArray, $firebaseAuth) {
 		var self = this;
@@ -129,17 +118,83 @@ angular.module('dev', ['firebase'])
 		//var $firebaseObject = $firebaseObject(ref);
 
 
+		self.database = $firebaseObject(firebaseConfig.ref());
+
 		self.getCollection = function (collectionName) {
 			var ref = firebaseConfig.ref().child(collectionName);
 
 			return $firebaseArray(ref);
 		};
-	}]);
+	}])
+	.service('facebookAuthService', ['ngFB', '$sessionStorage', '$firebaseAuth', 'firebaseAuthService', function (ngFB, $sessionStorage, $firebaseAuth, firebaseAuthService) {
+		var self = this;
+		var authData = null;
+
+		self.login = function () {
+			return ngFB.login({ scope: 'user_friends' })
+		};
+
+		self.logout = function () {
+			return ngFB.logout();
+		};
+
+		self.getLoginStatus = function () {
+			return ngFB.getLoginStatus().then(function (response) {
+				if (response.status === 'connected') {
+					// the user is logged in and has authenticated your
+					// app, and response.authResponse supplies
+					// the user's ID, a valid access token, a signed
+					// request, and the time the access token 
+					// and signed request each expire
+					var uid = response.authResponse.userID;
+					var accessToken = response.authResponse.accessToken;
+
+				} else if (response.status === 'not_authorized') {
+					// the user is logged in to Facebook, 
+					// but has not authenticated your app
+				} else {
+					// the user isn't logged in to Facebook.
+				}
+
+				console.debug(response.status);
+			});
+		};
+
+		self.getAccessToken = function () {
+			var user = JSON.parse(window.sessionStorage['user']);
+			return user.accessToken;
+		};
+
+	}])
+	.service('facebookService', ['$q', '$http', '$sessionStorage', 'ngFB', 'facebookAuthService', function ($q, $http, $sessionStorage, ngFB, facebookAuthService) {
+		var self = this;
+
+		self.getProfile = function () {
+			var df = $q.defer();
+
+			$http.get("https://graph.facebook.com/v2.0/me?access_token=" + facebookAuthService.getAccessToken()).then(function (response) {
+				df.resolve(response.data);
+			}, function (err) {
+				df.reject(err);
+			});
+
+			return df.promise;
+		};
+
+		self.getFriends = function () {
+			var df = $q.defer();
+
+			$http.get("https://graph.facebook.com/v2.0/me?fields=friends&access_token=" + facebookAuthService.getAccessToken()).then(function (response) {
+				df.resolve(response.data);
+			}, function (err) {
+				df.reject(err);
+			});
+
+			return df.promise;
+		};
+	}])
 
 
-
-
-angular.module('pague-me.services', ['dev'])
 	.factory("User", function (firebaseService, UserFactory) {
 		var usersRef = firebaseService.getCollection("users");
 
@@ -147,13 +202,15 @@ angular.module('pague-me.services', ['dev'])
 			return new usersRef.child(userid);
 		}
 	})
-	.service('userService', ['firebaseService', function (firebaseService) {
+	.service('userService', ['$rootScope', '$sessionStorage', 'firebaseService', function ($rootScope, $sessionStorage, firebaseService) {
 		var self = this;
 
 		function init() {
 			self.users = firebaseService.getCollection('users');
 		};
 
+
+		self.currentUser = null;
 
 
 		self.getUsers = function () {
@@ -162,12 +219,27 @@ angular.module('pague-me.services', ['dev'])
 		};
 
 		self.addUser = function (user) {
-			self.users.$add(user);
+			var dbUser = firebaseService.database['users'][user.uid] = user;
+
+			firebaseService.database.$save().then(function (response) {
+				//...
+			});
 		};
 
 		self.removeUser = function (user) {
 			self.users.$remove(user);
 		};
+
+		$rootScope.$on('auth.stateChanged', function (event, user) {
+			$rootScope.user = user;
+			$sessionStorage.user = JSON.stringify(user);
+			window.sessionStorage['user'] = JSON.stringify(user);
+
+			if (user) {
+				self.addUser(user);
+			}
+		});
+
 
 		init();
 	}]);

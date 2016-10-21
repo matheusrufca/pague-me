@@ -1,5 +1,16 @@
 ﻿<ion-view view-title="Profile">
 	<ion-content class="has-header">
+		<div>
+			<button class="button" ng-click="getProfile()">Obter profile</button>
+			<button class="button" ng-click="getFriends()">Obter amigos</button>
+
+			<ul>
+				<li ng-repeat="x in friends">
+					{{x.name}}
+				</li>
+			</ul>
+		</div>
+
 		<div class="list card">
 			<div class="item">
 				<h2>{{user.name}}</h2>

@@ -5,7 +5,7 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'ngOpenFB', 'pague-me.services'])
+angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'ngStorage', 'ngOpenFB', 'pague-me.services'])
 
 .run(function ($ionicPlatform, ngFB) {
 	$ionicPlatform.ready(function () {
@@ -24,6 +24,34 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 		ngFB.init({ appId: '103754903408134' });
 	});
 })
+	.run(function ($rootScope, $sessionStorage, firebaseAuthService) {
+
+		function restoreUserContext() {
+			var user, firebaseUSer;
+
+			firebaseUser = firebaseAuthService.getCurrentUser();
+
+			if (!firebaseUser) {
+				//TODO: clean session storage
+			} else {
+				try {
+					user = JSON.parse(window.sessionStorage['user']);
+					user = JSON.parse($sessionStorage.user);
+
+					user = user || {};
+
+					if (user.uid == firebaseUser.uid) {
+						$rootScope.user = user;
+					} else {
+						//TODO: redirect login
+					}
+				} catch (err) { }
+			}
+		};
+
+
+		restoreUserContext();
+	})
 
 .config(function ($stateProvider, $urlRouterProvider) {
 
@@ -62,14 +90,14 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 		}
 	})
 		.state('tab.chat-detail', {
-	  	url: '/chats/:chatId',
-	  	views: {
-	  		'tab-chats': {
-	  			templateUrl: 'templates/chat-detail.html',
-	  			controller: 'ChatDetailCtrl'
-	  		}
-	  	}
-	  })
+			url: '/chats/:chatId',
+			views: {
+				'tab-chats': {
+					templateUrl: 'templates/chat-detail.html',
+					controller: 'ChatDetailCtrl'
+				}
+			}
+		})
 
 	.state('tab.account', {
 		url: '/account',
