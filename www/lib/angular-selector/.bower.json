@@ -1,0 +1,41 @@
+{
+  "name": "angular-selector",
+  "version": "1.5.0",
+  "authors": [
+    "Indri Muska <indrimuska@gmail.com>"
+  ],
+  "description": "A native AngularJS directive that transform a simple `<select>` box into a full html select with typeahead.",
+  "main": [
+    "./dist/angular-selector.js",
+    "./dist/angular-selector.css"
+  ],
+  "keywords": [
+    "select",
+    "angular",
+    "selector",
+    "directive",
+    "typeahead"
+  ],
+  "license": "MIT",
+  "homepage": "http://indrimuska.github.io/angular-selector",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.4.4"
+  },
+  "_release": "1.5.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.5.0",
+    "commit": "a83415a4a3570dcd7fc62c2bdb62cb3113603c26"
+  },
+  "_source": "https://github.com/indrimuska/angular-selector.git",
+  "_target": "^1.5.0",
+  "_originalSource": "angular-selector",
+  "_direct": true
+}

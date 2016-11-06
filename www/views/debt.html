@@ -4,6 +4,8 @@
   The FriendsCtrl pulls data from the Friends service (service.js)
   The Friends service returns an array of friend data
 -->
+
+
 <ion-view>
 	<ion-content class="padding">
 		<form>
@@ -11,14 +13,27 @@
 
 
 			<div class="list list-inset">
-				<label class="item item-input">
-					<i class="icon ion-search placeholder-icon"></i>
-					<!--<select ng-model="friends" multiple>
-						<option ng-repeat="f in friends" value="{{f.id}}">{{f.name}}</option>
-					</select>-->
 
-					<ion-select multiple label-field="name" provider="friends" ng-model="debt.friends" />
-				</label>
+
+
+				<script type="text/ng-template" id="tmpl_friend-select-label">
+					{{option.name}}
+				</script>
+
+				<script type="text/ng-template" id="tmpl_friend-select-dropdown-item">
+					<img ng-src="{{option.picture}}" class="avatar">
+					<span class="padding-left">{{option.name}}</span>
+				</script>
+
+
+				<select selector
+						multi="true"
+						model="selectedFriends"
+						options="availableFriends"
+						view-item-template="'tmpl_friend-select-label'"
+						dropdown-item-template="'tmpl_friend-select-dropdown-item'"
+						closeAfterSelection="true"
+						class="item"></select>
 
 
 				<label class="item item-input">
@@ -30,7 +45,19 @@
 				</div>
 			</div>
 		</form>
+		<style>
+			img.avatar {
+				width: 35px;
+				height: 35px;
+				border-radius: 50%;
+				vertical-align: middle;
+			}
 
+
+			ul.selector-dropdown {
+				position: initial;
+			}
+		</style>
 
 	</ion-content>
 </ion-view>

@@ -149,7 +149,9 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 		$scope.debt = new Debt();
 
-		$scope.friends = [];
+		$scope.MyVar = [];
+
+		$scope.selectedFriends = [];
 
 
 		self.init = function () {
@@ -157,16 +159,49 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 		};
 
 
+
+		$scope.selectedFriends = [];
+
+		$scope.availableFriends = [
+			{
+				code: "GC",
+				label: "Chrome",
+				icon: "https://cdn1.iconfinder.com/data/icons/logotypes/32/chrome-24.png",
+				url: "https://www.google.it/chrome"
+			},
+			{
+				code: "FF",
+				label: "Firefox",
+				icon: "https://cdn1.iconfinder.com/data/icons/logotypes/32/firefox-24.png",
+				url: "https://www.mozilla.org/firefox"
+			},
+			{
+				code: "AS",
+				label: "Safari",
+				icon: "https://cdn1.iconfinder.com/data/icons/logotypes/32/safari-24.png",
+				url: "http://www.apple.com/safari/"
+			},
+			{
+				code: "IE",
+				label: "Internet Explorer",
+				icon: "https://cdn1.iconfinder.com/data/icons/logotypes/32/internet-explorer-24.png",
+				url: "http://windows.microsoft.com/internet-explorer"
+			}
+		];
+
+
+
+
 		self.getFriends = function () {
 			facebookService.getFriends().then(
 			function (data) {
-
-				$rootScope.user.friends = (data.friends.data || []).map(function (item) {
+				var mappedFriends = (data.friends.data || []).map(function (item) {
 					var usrPicture = "https://graph.facebook.com/" + item.id + "/picture?type=small";
 
 					return angular.extend(item, { picture: usrPicture });
 				});
 
+				$rootScope.user.friends = angular.copy(mappedFriends);
 			},
 			function (error) {
 				console.warn('Facebook error: ' + error.error_description);
@@ -184,8 +219,19 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 
 		$rootScope.$watchCollection('user.friends', function (newValue, oldValue) {
-			$scope.friends = newValue || [];
+			if (newValue) { _fillFriendsSelect(newValue); }
 		});
+
+
+
+		function _fillFriendsSelect(data) {
+			var mappedData = (data || []).map(function (item, i) {
+				return angular.extend(item, { label: item.name, value: item.id });
+			});
+
+			$scope.availableFriends = mappedData;
+		};
+
 
 		self.init();
 	})
