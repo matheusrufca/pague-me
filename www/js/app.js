@@ -5,131 +5,151 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'ngStorage', 'ngOpenFB', 'pague-me.services'])
+angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'ngStorage', 'ngOpenFB', 'firebase', 'pague-me.services'])
 
-.run(function ($ionicPlatform, ngFB) {
-	$ionicPlatform.ready(function () {
-		// Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-		// for form inputs)
-		if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard) {
-			cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
-			cordova.plugins.Keyboard.disableScroll(true);
+	.config(function ($stateProvider, $urlRouterProvider) {
 
-		}
-		if (window.StatusBar) {
-			// org.apache.cordova.statusbar required
-			StatusBar.styleDefault();
-		}
+		// Ionic uses AngularUI Router which uses the concept of states
+		// Learn more here: https://github.com/angular-ui/ui-router
+		// Set up the various states which the app can be in.
+		// Each state's controller can be found in controllers.js
+		$stateProvider
 
-		ngFB.init({ appId: '103754903408134' });
-	});
-})
-	.run(function ($rootScope, $sessionStorage, firebaseAuthService) {
+		// setup an abstract state for the tabs directive
+		  .state('tab', {
+		  	url: '/tab',
+		  	abstract: true,
+		  	templateUrl: 'templates/tabs.html',
+		  	controller: 'TabsController'
+		  })
 
-		function restoreUserContext() {
-			var user, firebaseUSer;
+		// Each tab has its own nav history stack:
 
-			firebaseUser = firebaseAuthService.getCurrentUser();
-
-			if (!firebaseUser) {
-				//TODO: clean session storage
-			} else {
-				try {
-					user = JSON.parse(window.sessionStorage['user']);
-					user = JSON.parse($sessionStorage.user);
-
-					user = user || {};
-
-					if (user.uid == firebaseUser.uid) {
-						$rootScope.user = user;
-					} else {
-						//TODO: redirect login
+		.state('tab.dash', {
+			url: '/dash',
+			views: {
+				'dash': {
+					templateUrl: 'views/dash.html',
+					controller: 'DashCtrl'
+				}
+			}
+		})
+			.state('tab.debt-new', {
+				url: '/debt/new',
+				views: {
+					'dash': {
+						templateUrl: 'views/debt.html',
+						controller: 'DebtDetailController'
 					}
-				} catch (err) { }
-			}
-		};
+				}
+			})
+			//.state('tab.debt-detail', {
+			//	url: '/debt/:item_id',
+			//	views: {
+			//		'debt': {
+			//			templateUrl: 'views/debt.html',
+			//			controller: 'DebtDetailController'
+			//		}
+			//	}
+			//})
 
 
-		restoreUserContext();
-	})
-
-.config(function ($stateProvider, $urlRouterProvider) {
-
-	// Ionic uses AngularUI Router which uses the concept of states
-	// Learn more here: https://github.com/angular-ui/ui-router
-	// Set up the various states which the app can be in.
-	// Each state's controller can be found in controllers.js
-	$stateProvider
-
-	// setup an abstract state for the tabs directive
-	  .state('tab', {
-	  	url: '/tab',
-	  	abstract: true,
-	  	templateUrl: 'templates/tabs.html'
-	  })
-
-	// Each tab has its own nav history stack:
-
-	.state('tab.dash', {
-		url: '/dash',
-		views: {
-			'tab-dash': {
-				templateUrl: 'templates/tab-dash.html',
-				controller: 'DashCtrl'
-			}
-		}
-	})
-
-	.state('tab.chats', {
-		url: '/chats',
-		views: {
-			'tab-chats': {
-				templateUrl: 'templates/tab-chats.html',
-				controller: 'ChatsCtrl'
-			}
-		}
-	})
-		.state('tab.chat-detail', {
-			url: '/chats/:chatId',
+		.state('tab.chats', {
+			url: '/chats',
 			views: {
 				'tab-chats': {
-					templateUrl: 'templates/chat-detail.html',
-					controller: 'ChatDetailCtrl'
+					templateUrl: 'templates/tab-chats.html',
+					controller: 'ChatsCtrl'
+				}
+			}
+		})
+			.state('tab.chat-detail', {
+				url: '/chats/:chatId',
+				views: {
+					'tab-chats': {
+						templateUrl: 'templates/chat-detail.html',
+						controller: 'ChatDetailCtrl'
+					}
+				}
+			})
+
+		.state('tab.account', {
+			url: '/account',
+			views: {
+				'tab-account': {
+					templateUrl: 'templates/tab-account.html',
+					controller: 'AccountCtrl'
 				}
 			}
 		})
 
-	.state('tab.account', {
-		url: '/account',
-		views: {
-			'tab-account': {
-				templateUrl: 'templates/tab-account.html',
-				controller: 'AccountCtrl'
+		.state('tab.login', {
+			url: '/login',
+			views: {
+				'tab-login': {
+					templateUrl: 'views/login.html',
+					controller: 'LoginController'
+				}
 			}
-		}
+		})
+
+
+
+		.state('tab.profile', {
+			url: '/profile',
+			views: {
+				'tab-profile': {
+					templateUrl: 'views/profile.html',
+					controller: 'ProfileController'
+				}
+			}
+		});
+
+		// if none of the above states are matched, use this as the fallback
+		$urlRouterProvider.otherwise('/tab/dash');
+
 	})
 
-	.state('tab.login', {
-		url: '/login',
-		views: {
-			'tab-login': {
-				templateUrl: 'views/login.html',
-				controller: 'LoginController'
-			}
-		}
-	})
+	.run(function ($ionicPlatform, ngFB) {
+		$ionicPlatform.ready(function () {
+			// Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
+			// for form inputs)
+			if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard) {
+				cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
+				cordova.plugins.Keyboard.disableScroll(true);
 
-	.state('tab.profile', {
-		url: '/profile',
-		views: {
-			'tab-profile': {
-				templateUrl: 'views/profile.html',
-				controller: 'ProfileController'
 			}
-		}
+			if (window.StatusBar) {
+				// org.apache.cordova.statusbar required
+				StatusBar.styleDefault();
+			}
+
+			ngFB.init({ appId: '103754903408134' });
+		});
+	})
+	.run(function ($rootScope, $localStorage, firebaseAuthService) {
+
+		function restoreUserContext() {
+			var user, sessionUser, firebaseUser;
+
+			try {
+				firebaseUser = firebaseAuthService.getCurrentUser()
+
+				sessionUser = JSON.parse(window.localStorage['user']);
+				sessionUser = JSON.parse($localStorage.user);
+			} catch (err) { }
+
+
+			if (sessionUser) {
+				if (firebaseUser && (sessionUser.uid !== firebaseUser.uid)) {
+
+					//Refresh data
+					console.warn('Session uid is different of Firebase uid.');
+				}
+			}
+
+			$rootScope.user = sessionUser || firebaseUser;
+		};
+
+		restoreUserContext();
 	});
-
-	// if none of the above states are matched, use this as the fallback
-	$urlRouterProvider.otherwise('/tab/dash');
-
-});

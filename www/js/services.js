@@ -50,15 +50,10 @@ angular.module('starter.services', ['ngOpenFB'])
 })
 
 
-
-
-
-
-
 angular.module('pague-me.services', ['ngStorage', 'firebase'])
 	.constant('firebaseConfig', {
 		'url': "https://pague-me.firebaseio.com",
-		'ref': function () { return firebase.database().ref(); }
+		'ref': function (path) { return firebase.database().ref(path); }
 	})
 	.service('firebaseAuthService', ['$rootScope', 'firebaseConfig', '$firebaseAuth', function ($rootScope, firebaseConfig, $firebaseAuth) {
 		var self = this;
@@ -118,15 +113,29 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		//var $firebaseObject = $firebaseObject(ref);
 
 
-		self.database = $firebaseObject(firebaseConfig.ref());
+		self.ref = function (path) {
 
-		self.getCollection = function (collectionName) {
+			return firebaseConfig.ref(path);
+		};
+
+		self.query = function (ref) {
+			ref = ref || firebaseConfig.ref();
+			return $firebaseObject(ref);
+		}
+
+		self.queryObject = function (collectionName) {
+			var ref = firebaseConfig.ref().child(collectionName);
+
+			return $firebaseObject(ref);
+		};
+
+		self.queryCollection = function (collectionName) {
 			var ref = firebaseConfig.ref().child(collectionName);
 
 			return $firebaseArray(ref);
 		};
 	}])
-	.service('facebookAuthService', ['ngFB', '$sessionStorage', '$firebaseAuth', 'firebaseAuthService', function (ngFB, $sessionStorage, $firebaseAuth, firebaseAuthService) {
+	.service('facebookAuthService', ['ngFB', '$localStorage', '$firebaseAuth', 'firebaseAuthService', function (ngFB, $localStorage, $firebaseAuth, firebaseAuthService) {
 		var self = this;
 		var authData = null;
 
@@ -150,10 +159,10 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 					var accessToken = response.authResponse.accessToken;
 
 				} else if (response.status === 'not_authorized') {
-					// the user is logged in to Facebook, 
+					// the user is logged in to Facedebt, 
 					// but has not authenticated your app
 				} else {
-					// the user isn't logged in to Facebook.
+					// the user isn't logged in to Facedebt.
 				}
 
 				console.debug(response.status);
@@ -161,12 +170,15 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		};
 
 		self.getAccessToken = function () {
-			var user = JSON.parse(window.sessionStorage['user']);
+			var user;
+
+			user = JSON.parse(window.localStorage['user'] || '{}');
+
 			return user.accessToken;
 		};
 
 	}])
-	.service('facebookService', ['$q', '$http', '$sessionStorage', 'ngFB', 'facebookAuthService', function ($q, $http, $sessionStorage, ngFB, facebookAuthService) {
+	.service('facebookService', ['$q', '$http', '$localStorage', 'ngFB', 'facebookAuthService', function ($q, $http, $localStorage, ngFB, facebookAuthService) {
 		var self = this;
 
 		self.getProfile = function () {
@@ -196,53 +208,155 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 
 
 	.factory("User", function (firebaseService, UserFactory) {
-		var usersRef = firebaseService.getCollection("users");
+		var usersRef = firebaseService.queryCollection("users");
 
 		return function (userid) {
 			return new usersRef.child(userid);
 		}
 	})
-	.service('userService', ['$rootScope', '$sessionStorage', 'firebaseService', function ($rootScope, $sessionStorage, firebaseService) {
+	.service('userService', ['$rootScope', '$localStorage', '$firebaseObject', '$firebaseArray', 'firebaseService', function ($rootScope, $localStorage, $firebaseObject, $firebaseArray, firebaseService) {
 		var self = this;
+		var service = {};
 
-		function init() {
-			self.users = firebaseService.getCollection('users');
+		self.ref = 'users'
+		self.usersRef = null;
+
+		
+		self.users = [];
+
+		self.init = function() {
+			self.usersRef = firebaseService.ref(self.ref);
+			self.users = service.getUsers();
 		};
 
 
-		self.currentUser = null;
+		service.currentUser = null;
 
 
-		self.getUsers = function () {
-			self.users = firebaseService.getCollection('users');
-			return users;
+		service.getUsers = function () {
+			return firebaseService.queryCollection('users');
 		};
 
-		self.addUser = function (user) {
-			var dbUser = firebaseService.database['users'][user.uid] = user;
+		service.addUser = function (user) {
+			var usersSet = self.usersRef.child(user.uid)
 
-			firebaseService.database.$save().then(function (response) {
-				//...
+			usersSet.set(user).then(function (response) {
+				//	//...
 			});
 		};
 
-		self.removeUser = function (user) {
+		service.removeUser = function (user) {
 			self.users.$remove(user);
 		};
 
 		$rootScope.$on('auth.stateChanged', function (event, user) {
 			$rootScope.user = user;
-			$sessionStorage.user = JSON.stringify(user);
-			window.sessionStorage['user'] = JSON.stringify(user);
+			$localStorage.user = JSON.stringify(user);
+			window.localStorage['user'] = JSON.stringify(user);
 
 			if (user) {
-				self.addUser(user);
+				service.addUser(user);
 			}
 		});
 
 
-		init();
-	}]);
+		self.init();
+
+		return service;
+	}])
+
+	.factory('debtService', ['firebaseService', '$firebaseArray', function (firebaseService, $firebaseArray) {
+		var self = {};
+		var service = {};
+
+		//self.$firebaseArray = $firebaseArray("https://pague-me.firebaseio.com/debts/")
+
+		var debtsRef;
+
+		self.ref = 'debts';
+
+
+		self.init = function () {
+			debtsRef = firebaseService.ref(self.ref);
+
+			self.debts = service.getDebts();
+		};
+
+
+
+
+
+		service.getDebts = function () {
+			return firebaseService.queryCollection('debts');
+		};
+
+
+		service.get = function (item_id) {
+			var debt;
+			debt = self.debts.$getRecord(item_id);
+
+			return debt;
+		};
+
+		service.add = function (item) {
+			self.debts.$add(item).then(function (response) {
+				console.debug(response);
+			}, function (response) {
+				console.debug(response);
+			});
+		};
+
+		service.remove = function (item) {
+			self.debts.$remove(item);
+		};
+
+		service.getUserDebts = function (user_id) {
+			var userDebts = [], creditors, debitors;
+
+			//creditors =self.debts.$ref().orderByChild("creditor").equalTo(user_id);
+			//debitors = self.debts.$ref().orderByChild("debitor").equalTo(user_id);
+
+			return userDebts.concat(creditors || [], debitors || []);
+		};
+
+		//var uid = "simplelogin:1";
+		//var todosRef = new Firebase("https://yourdb.firebaseio.com/todos/" + uid);
+		//var privateTodosRef = todos.orderByChild("private").equalTo(true);
+		//var privateTodos;
+
+		//privateTodosRef.on("value", function (response) {
+		//	privateTodos = response.val();
+		//});
+
+
+		self.init();
+
+		return service;
+	}])
+	.factory("Debt", function (debtService) {
+		function Debt(debtData) {
+			if (debtData) {
+				this.setData(debtData);
+			}
+			// Some other initializations related to debt
+		};
+
+		Debt.prototype = {
+			setData: function (debtData) {
+				angular.extend(this, debtData);
+			},
+			load: function (id) {
+				var record = debtService.get(id);
+
+				this.setData(record);
+			},
+			//toJSON: function () {
+			//	return JSON.stringify(this);
+			//}
+		};
+
+		return Debt;
+	});
 
 
 

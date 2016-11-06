@@ -4,21 +4,14 @@
 			<button class="button" ng-click="getProfile()">Obter profile</button>
 			<button class="button" ng-click="getFriends()">Obter amigos</button>
 
-			<ul>
-				<li ng-repeat="x in friends">
-					{{x.name}}
-				</li>
-			</ul>
+			
 		</div>
 
-		<div class="list card">
-			<div class="item">
-				<h2>{{user.name}}</h2>
-				<p>{{user.city}}</p>
-			</div>
-			<div class="item item-body">
-				<img src="http://graph.facebook.com/{{user.id}}/picture?width=270&height=270" />
-			</div>
-		</div>
+		<ion-list>
+			<ion-item class="item-avatar item-thumbnail-left item-icon-right" collection-repeat="x in friends">
+				<img ng-src="{{x.picture}}" src="#" />
+				<div class="item-text-center item-text-wrap">{{x.name}}</div>
+			</ion-item>
+		</ion-list>
 	</ion-content>
 </ion-view>

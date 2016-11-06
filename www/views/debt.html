@@ -1,0 +1,36 @@
+﻿<!--
+  This template loads for the 'tab.friend-detail' state (app.js)
+  'friend' is a $scope variable created in the FriendsCtrl controller (controllers.js)
+  The FriendsCtrl pulls data from the Friends service (service.js)
+  The Friends service returns an array of friend data
+-->
+<ion-view>
+	<ion-content class="padding">
+		<form>
+
+
+
+			<div class="list list-inset">
+				<label class="item item-input">
+					<i class="icon ion-search placeholder-icon"></i>
+					<!--<select ng-model="friends" multiple>
+						<option ng-repeat="f in friends" value="{{f.id}}">{{f.name}}</option>
+					</select>-->
+
+					<ion-select multiple label-field="name" provider="friends" ng-model="debt.friends" />
+				</label>
+
+
+				<label class="item item-input">
+					<input type="number" placeholder="Quantia" ng-model="debt.value" />
+				</label>
+
+				<div class="padding">
+					<button class="button button-block button-positive" ng-click="save()">Salvar</button>
+				</div>
+			</div>
+		</form>
+
+
+	</ion-content>
+</ion-view>

@@ -1,0 +1,15 @@
+﻿<ion-view view-title="Dashboard">
+	<ion-content>
+		<div class="text-right">
+			<a class="button button-icon assertive icon ion-plus-circled" href="#/tab/debt/new"></a>
+		</div>
+
+
+		<ion-list>
+			<!-- list of user debts-->
+			<ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="debt in debts" type="item-text-wrap" href="#/tab/debt/{{debt.id}}">
+				<h2>{{debt.value}}</h2>
+			</ion-item>
+		</ion-list>
+	</ion-content>
+</ion-view>
