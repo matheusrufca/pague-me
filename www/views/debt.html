@@ -15,10 +15,10 @@
 					<input type="text" placeholder="Quantia" ng-model="debt.value" ui-money-mask min="1" ng-required="true" />
 				</label>
 
-
 				<label class="item item-input">
 					<textarea type="text" placeholder="Descrição" ng-model="debt.notes" ng-required="true" ng-maxlength="150" maxlength="150" rows="2"></textarea>
 				</label>
+
 				<label>
 					<ion-toggle toggle-class="toggle-energized" ng-model="debt.isCreditor">
 						<span class="label" ng-if="debt.isCreditor">Me deve</span>
@@ -33,9 +33,8 @@
 						dropdown-item-template="'tmpl_friend-select-dropdown-item'"
 						closeAfterSelection="true"
 						class="item" ng-required="true"></select>
-
-
-				<div class="">
+				
+				<div>
 					<button type="submit" class="button button-block button-positive" ng-click="save(formDebt)" ng-disabled="!isFormValid(formDebt)">Salvar</button>
 				</div>
 			</div>
