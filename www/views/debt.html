@@ -15,20 +15,20 @@
 					<input type="text" placeholder="Quantia" ng-model="debt.value" ui-money-mask min="1" ng-required="true" />
 				</label>
 
+
+				<label class="item item-input">
+					<textarea type="text" placeholder="Descrição" ng-model="debt.notes" ng-required="true" ng-maxlength="150" maxlength="150" rows="2"></textarea>
+				</label>
 				<label>
 					<ion-toggle toggle-class="toggle-energized" ng-model="debt.isCreditor">
 						<span class="label" ng-if="debt.isCreditor">Me deve</span>
 						<span class="label" ng-if="!debt.isCreditor">Estou devendo</span>
 					</ion-toggle>
 				</label>
-				<label class="item item-input">
-					<input type="text" placeholder="Descrição" ng-model="debt.notes" ng-required="true" />
-				</label>
-
 				<select selector
 						model="debt.selectedFriend"
 						options="availableFriends"
-						placeholder="Selecione seus amigos"
+						placeholder="Selecione seu amigo"
 						view-item-template="'tmpl_friend-select-label'"
 						dropdown-item-template="'tmpl_friend-select-dropdown-item'"
 						closeAfterSelection="true"
@@ -38,10 +38,6 @@
 				<div class="">
 					<button type="submit" class="button button-block button-positive" ng-click="save(formDebt)" ng-disabled="!isFormValid(formDebt)">Salvar</button>
 				</div>
-
-
-				<pre ng-bind="debt | json"></pre>
-				<pre ng-bind="formDebt | json"></pre>
 			</div>
 		</form>
 		<style>
