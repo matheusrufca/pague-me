@@ -8,44 +8,50 @@
 
 <ion-view>
 	<ion-content class="padding">
-		<form>
-
-
-
+		<form name="formDebt">
 			<div class="list list-inset">
 
+				<label class="item item-input">
+					<input type="text" placeholder="Quantia" ng-model="debt.value" ui-money-mask min="1" ng-required="true" />
+				</label>
 
-
-				<script type="text/ng-template" id="tmpl_friend-select-label">
-					{{option.name}}
-				</script>
-
-				<script type="text/ng-template" id="tmpl_friend-select-dropdown-item">
-					<img ng-src="{{option.picture}}" class="avatar">
-					<span class="padding-left">{{option.name}}</span>
-				</script>
-
+				<label>
+					<ion-toggle toggle-class="toggle-energized" ng-model="debt.isCreditor">
+						<span class="label" ng-if="debt.isCreditor">Me deve</span>
+						<span class="label" ng-if="!debt.isCreditor">Estou devendo</span>
+					</ion-toggle>
+				</label>
+				<label class="item item-input">
+					<input type="text" placeholder="Descrição" ng-model="debt.notes" ng-required="true" />
+				</label>
 
 				<select selector
-						multi="true"
-						model="selectedFriends"
+						model="debt.selectedFriend"
 						options="availableFriends"
+						placeholder="Selecione seus amigos"
 						view-item-template="'tmpl_friend-select-label'"
 						dropdown-item-template="'tmpl_friend-select-dropdown-item'"
 						closeAfterSelection="true"
-						class="item"></select>
+						class="item" ng-required="true"></select>
 
 
-				<label class="item item-input">
-					<input type="number" placeholder="Quantia" ng-model="debt.value" />
-				</label>
-
-				<div class="padding">
-					<button class="button button-block button-positive" ng-click="save()">Salvar</button>
+				<div class="">
+					<button type="submit" class="button button-block button-positive" ng-click="save(formDebt)" ng-disabled="!isFormValid(formDebt)">Salvar</button>
 				</div>
+
+
+				<pre ng-bind="debt | json"></pre>
+				<pre ng-bind="formDebt | json"></pre>
 			</div>
 		</form>
 		<style>
+			.label {
+				color: #AAAAAA;
+				font-family: "Helvetica Neue", "Roboto", "Segoe UI", sans-serif;
+				font-size: 14px;
+				font-weight: 400;
+			}
+
 			img.avatar {
 				width: 35px;
 				height: 35px;
@@ -61,3 +67,13 @@
 
 	</ion-content>
 </ion-view>
+
+<!-- friend-selector label template -->
+<script type="text/ng-template" id="tmpl_friend-select-label">
+	{{option.name}}
+</script>
+<!-- friend-selector dropdown item template -->
+<script type="text/ng-template" id="tmpl_friend-select-dropdown-item">
+	<img ng-src="{{option.picture}}" class="avatar">
+	<span class="padding-left">{{option.name}}</span>
+</script>

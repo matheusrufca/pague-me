@@ -66,7 +66,6 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 	$scope.signIn = function () {
 		firebaseAuthService.facebookSignIn().then(function (response) {
 			$state.go('tab.dash');
-
 			console.debug(JSON.stringify(response));
 		}).catch(function (response) {
 			console.debug(JSON.stringify(response));
@@ -144,50 +143,25 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 
 
-	.controller('DebtDetailController', function ($rootScope, $scope, $state, $stateParams, facebookService, debtService, Debt) {
+	.controller('DebtDetailController', function ($rootScope, $scope, $state, $stateParams, facebookService, userService, debtService, Debt, DebtMapper) {
 		var self = {};
 
-		$scope.debt = new Debt();
 
-		$scope.MyVar = [];
-
-		$scope.selectedFriends = [];
-
-
-		self.init = function () {
-			self.getFriends();
+		self.formDebt = {
+			isCreditor: true,
+			selectedFriend: null
 		};
 
 
 
-		$scope.selectedFriends = [];
 
-		$scope.availableFriends = [
-			{
-				code: "GC",
-				label: "Chrome",
-				icon: "https://cdn1.iconfinder.com/data/icons/logotypes/32/chrome-24.png",
-				url: "https://www.google.it/chrome"
-			},
-			{
-				code: "FF",
-				label: "Firefox",
-				icon: "https://cdn1.iconfinder.com/data/icons/logotypes/32/firefox-24.png",
-				url: "https://www.mozilla.org/firefox"
-			},
-			{
-				code: "AS",
-				label: "Safari",
-				icon: "https://cdn1.iconfinder.com/data/icons/logotypes/32/safari-24.png",
-				url: "http://www.apple.com/safari/"
-			},
-			{
-				code: "IE",
-				label: "Internet Explorer",
-				icon: "https://cdn1.iconfinder.com/data/icons/logotypes/32/internet-explorer-24.png",
-				url: "http://windows.microsoft.com/internet-explorer"
-			}
-		];
+		self.init = function () {
+			$scope.debt = angular.copy(self.formDebt);
+			self.getFriends();
+		};
+
+		$scope.availableFriends = [{}];
+
 
 
 
@@ -209,12 +183,36 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 		};
 
 
-		$scope.save = function () {
-			var item = angular.copy($scope.debt);
+		$scope.save = function (formDebt) {
+			var debt, debtData, friendAppUser;
 
-			if (item) {
-				debtService.add(item);
-			}
+			if (!formDebt) { return; }
+
+			formDebt = angular.extend(formDebt, $scope.debt);
+
+			userService.findUserByFacebookId(formDebt.selectedFriend.id).then(function (appUser) {
+				debtData = angular.copy(formDebt);
+				debtData['_friend'] = appUser.uid;
+				debtData['_me'] = $rootScope.user.uid;
+
+				debt = DebtMapper.create(debtData);
+
+
+				debtService.add(debt).then(function (response) {
+					$scope.resetForm(formDebt);
+					$state.go('tab.dash');
+				}, function (error) {
+					//...
+				});
+			}, function (error) {
+				//...
+			});
+		};
+
+		$scope.resetForm = function (formDebt) {
+			if (!formDebt) { return; }
+			$scope.debt = angular.copy(self.formDebt);
+			formDebt.$setPristine();
 		};
 
 
@@ -224,12 +222,12 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 
 
-		function _fillFriendsSelect(data) {
-			var mappedData = (data || []).map(function (item, i) {
-				return angular.extend(item, { label: item.name, value: item.id });
-			});
+		$scope.isFormValid = function (formDebt) {
+			return formDebt.$valid && $scope.debt.selectedFriend;
+		}
 
-			$scope.availableFriends = mappedData;
+		function _fillFriendsSelect(data) {
+			$scope.availableFriends = data;
 		};
 
 

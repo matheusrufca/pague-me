@@ -64,13 +64,13 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			var dfSignIn = auth.$signInWithPopup("facebook", { scope: "email,user_friends" });
 
 			dfSignIn.then(function (firebaseUser) {
-				var user = angular.extend(firebaseUser.user.toJSON(), firebaseUser.credential);
+				var user = angular.extend(firebaseUser.user.toJSON(), { credential: firebaseUser.credential });
 
 				$rootScope.$broadcast('auth.stateChanged', user);
 
 				var a = [firebaseUser, auth.$getAuth()]
 
-				console.log(JSON.stringify(a));
+				//console.log(JSON.stringify(a));
 			}).catch(function (error) {
 				console.warn("Authentication failed:", error);
 			});
@@ -114,7 +114,6 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 
 
 		self.ref = function (path) {
-
 			return firebaseConfig.ref(path);
 		};
 
@@ -174,7 +173,7 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 
 			user = JSON.parse(window.localStorage['user'] || '{}');
 
-			return user.accessToken;
+			return user.providerData.accessToken;
 		};
 
 	}])
@@ -207,30 +206,84 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 	}])
 
 
-	.factory("User", function (firebaseService, UserFactory) {
-		var usersRef = firebaseService.queryCollection("users");
+	.factory("User", function () {
+		function _mapFirebaseUserObject(firebaseUser) {
+			var userData = {};
 
-		return function (userid) {
-			return new usersRef.child(userid);
-		}
-	})
-	.service('userService', ['$rootScope', '$localStorage', '$firebaseObject', '$firebaseArray', 'firebaseService', function ($rootScope, $localStorage, $firebaseObject, $firebaseArray, firebaseService) {
-		var self = this;
-		var service = {};
+			userData = {
+				uid: firebaseUser.uid,
+				name: firebaseUser.displayName,
+				email: firebaseUser.email,
+				photoURL: firebaseUser.photoURL
+			};
 
-		self.ref = 'users'
-		self.usersRef = null;
-
-		
-		self.users = [];
-
-		self.init = function() {
-			self.usersRef = firebaseService.ref(self.ref);
-			self.users = service.getUsers();
+			return new User(userData);
 		};
 
 
-		service.currentUser = null;
+		function _mapFacebookUserObject(firebaseUser) {
+			var userData = {}, providerData = angular.copy(firebaseUser.providerData[0]);
+
+
+
+			userData = angular.extend(_mapFirebaseUserObject(firebaseUser), {
+				name: providerData.displayName,
+				email: providerData.email,
+				photoURL: providerData.photoURL,
+				providerData: angular.extend(providerData, firebaseUser.credential)
+			});
+
+			return new User(userData);
+		};
+
+
+		function User(data) {
+			if (data) {
+				this.setData(data);
+			}
+			// Some other initializations related to user
+		};
+
+
+		User.createFacebookUser = function (userData) {
+			return _mapFacebookUserObject(userData);
+		};
+
+		User.prototype = {
+			setData: function (data) {
+				angular.extend(this, data);
+			}
+		};
+
+		return User;
+	})
+	.factory('userService', ['$rootScope', '$q', '$localStorage', '$firebaseObject', '$firebaseArray', 'firebaseService', 'User', function ($rootScope, $q, $localStorage, $firebaseObject, $firebaseArray, firebaseService, User) {
+		var self = {}, service = {};
+
+		self.ref = 'users'
+
+		self.users = [];
+
+		self.init = function () {
+			self.users = service.getUsers();
+		};
+
+		service.findUserByFacebookId = function (facebookId) {
+			var deferred = $q.defer();
+
+			// query by 'providerData/uid'
+			self.users.$ref().orderByChild('providerData/uid').equalTo(facebookId).once("value", function (dataSnapshot) {
+				var appUser;
+				if (dataSnapshot.exists()) {
+					appUser = Object.values(dataSnapshot.val())[0];
+					deferred.resolve(appUser);
+				} else {
+					deferred.reject("Not found");
+				}
+			});
+
+			return deferred.promise;
+		};
 
 
 		service.getUsers = function () {
@@ -238,10 +291,10 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		};
 
 		service.addUser = function (user) {
-			var usersSet = self.usersRef.child(user.uid)
+			var usersSet = self.users.$ref().child(user.uid)
 
 			usersSet.set(user).then(function (response) {
-				//	//...
+				console.debug(response);
 			});
 		};
 
@@ -249,13 +302,20 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			self.users.$remove(user);
 		};
 
-		$rootScope.$on('auth.stateChanged', function (event, user) {
-			$rootScope.user = user;
-			$localStorage.user = JSON.stringify(user);
-			window.localStorage['user'] = JSON.stringify(user);
 
+		$rootScope.$on('auth.stateChanged', function (event, user) {
 			if (user) {
-				service.addUser(user);
+				var appUser = User.createFacebookUser(user);
+
+				$rootScope.user = appUser;
+				$localStorage.user = JSON.stringify(appUser);
+				window.localStorage['user'] = JSON.stringify(appUser);
+
+				service.addUser(appUser);
+			} else {
+				$rootScope.user = null;
+				delete $localStorage.user;
+				delete window.localStorage['user'];
 			}
 		});
 
@@ -265,31 +325,23 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		return service;
 	}])
 
-	.factory('debtService', ['firebaseService', '$firebaseArray', function (firebaseService, $firebaseArray) {
-		var self = {};
-		var service = {};
+	.factory('debtService', ['firebaseService', '$firebaseArray', 'userService', function (firebaseService, $firebaseArray, userService) {
+		var self = {}, service = {};
 
-		//self.$firebaseArray = $firebaseArray("https://pague-me.firebaseio.com/debts/")
-
-		var debtsRef;
-
+		self.debtsRef = null;
 		self.ref = 'debts';
 
-
 		self.init = function () {
-			debtsRef = firebaseService.ref(self.ref);
+			self.debtsRef = firebaseService.ref(self.ref);
 
 			self.debts = service.getDebts();
 		};
 
 
 
-
-
 		service.getDebts = function () {
 			return firebaseService.queryCollection('debts');
 		};
-
 
 		service.get = function (item_id) {
 			var debt;
@@ -299,11 +351,16 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		};
 
 		service.add = function (item) {
-			self.debts.$add(item).then(function (response) {
+			var deffered = self.debts.$add(item);
+
+
+			deffered.then(function (response) {
 				console.debug(response);
 			}, function (response) {
 				console.debug(response);
 			});
+
+			return deffered;
 		};
 
 		service.remove = function (item) {
@@ -341,6 +398,18 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			// Some other initializations related to debt
 		};
 
+
+		Debt.create = function (data) {
+			var debtData = {
+
+			};
+
+
+
+			return new Debt(debtData);
+		};
+
+
 		Debt.prototype = {
 			setData: function (debtData) {
 				angular.extend(this, debtData);
@@ -356,7 +425,53 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		};
 
 		return Debt;
-	});
+	})
+
+
+	.factory("DebtMapper", ['Debt', 'userService', function (Debt, userService) {
+		Debt.create = function (data) {
+			var debtData,debitor, creditor;
+
+
+			if (data.isCreditor) {
+				debitor = data['_friend'];
+				creditor = data['_me'];
+			} else {
+				debitor = data['_me'];
+				creditor = data['_friend'];
+			}
+
+			debtData = {
+				value: data.value,
+				notes: data.notes,
+				creditor: creditor,
+				debitor: debitor,
+				pending: true,
+				'_createdBy': data['_me']
+			};
+
+
+
+			return new Debt(debtData);
+		};
+
+
+		Debt.prototype = {
+			setData: function (debtData) {
+				angular.extend(this, debtData);
+			},
+			load: function (id) {
+				var record = debtService.get(id);
+
+				this.setData(record);
+			},
+			//toJSON: function () {
+			//	return JSON.stringify(this);
+			//}
+		};
+
+		return Debt;
+	}]);
 
 
 
