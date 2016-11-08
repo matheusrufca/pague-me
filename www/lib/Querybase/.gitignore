@@ -1,0 +1,7 @@
+dist
+node_modules
+examples/querybase.js
+examples/querybase.min.js
+examples/**/*.d.ts
+coverage
+tsd.json

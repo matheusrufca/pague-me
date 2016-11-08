@@ -1,0 +1,15 @@
+{
+  "name": "Querybase",
+  "homepage": "https://github.com/davideast/Querybase",
+  "version": "0.3.0",
+  "_release": "0.3.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.3.0",
+    "commit": "a6d301f134b99673955c64dc3821f5420dd9d15e"
+  },
+  "_source": "https://github.com/davideast/Querybase.git",
+  "_target": "^0.3.0",
+  "_originalSource": "https://github.com/davideast/Querybase.git",
+  "_direct": true
+}

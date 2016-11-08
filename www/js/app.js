@@ -5,7 +5,7 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'ngStorage', 'ngOpenFB', 'firebase', 'selector', 'ui.utils.masks', 'pague-me.services'])
+angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'ngStorage', 'ngOpenFB', 'firebase', 'selector', 'ui.utils.masks', 'querybase', 'pague-me.services'])
 
 	.config(function ($stateProvider, $urlRouterProvider) {
 
@@ -110,6 +110,55 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 
 	})
 
+	.config(function ($provide) {
+		$provide.decorator('$firebaseArray', function ($delegate, $window) {
+			var add, timestamp, currentUser;
+
+			add = $delegate.prototype.$add;
+
+			$delegate.prototype.$add = function (newData) {
+				try {
+					timestamp = new Date().getTime();
+					currentUser = $window.firebase.auth().currentUser.uid;
+				} catch (err) { }
+
+				//works if remove '_'
+				newData['_createdAt'] = timestamp;
+				newData['_createdBy'] = currentUser;
+
+				return add.call(this, newData);
+			};
+
+			return $delegate;
+		});
+	})
+
+	.config(function ($provide) {
+		$provide.decorator('$firebaseObject', function ($delegate, $window) {
+			var save, timestamp, currentUser;
+
+			save = $delegate.prototype.$save;
+
+
+
+			$delegate.prototype.$save = function () {
+				try {
+					timestamp = new Date().getTime();
+					currentUser = $window.firebase.auth().currentUser.uid;
+				} catch (err) { }
+
+				//works if remove '.'
+				this['.modifiedAt'] = timestamp;
+				this['.modifiedBy'] = currentUser;
+
+				return save.call(this);
+			};
+
+			return $delegate;
+		});
+	})
+
+
 	.run(function ($ionicPlatform, ngFB) {
 		$ionicPlatform.ready(function () {
 			// Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -152,4 +201,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 		};
 
 		restoreUserContext();
-	});
+	})
+
+
+

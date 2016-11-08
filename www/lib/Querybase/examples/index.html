@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+	<script src="querybase.js"></script>
+	<meta charset="utf-8">
+	<title>Querybase</title>
+</head>
+
+<body>
+
+	<button id="btnSeed">Seed</button>
+	<script>
+		// Initialize Firebase
+		var config = {
+			apiKey: "AIzaSyBonePK0eTlXuhy3Oy0KYc6g1_UrVtEXqs",
+			authDomain: "querybase-b565d.firebaseapp.com",
+			databaseURL: "https://querybase-b565d.firebaseio.com",
+			storageBucket: "querybase-b565d.appspot.com",
+		};
+		firebase.initializeApp(config);
+
+		var ref = firebase.database().ref();
+		var peopleRef = ref.child("people");
+		var queryRef = querybase.ref(peopleRef, ['name', 'age', 'location']);
+		
+		btnSeed.addEventListener('click', function(e) {
+			peopleRef.remove();
+			addPerson('David_East', 27, 'SF');
+			addPerson('Shannon', 28, 'SF');
+			addPerson('Coco', 1, 'SF');
+			addPerson('Cash', 3, 'SF');
+			addPerson('George', 27, 'DEN');
+			addPerson('Bob', '27', 'SF');
+			addPerson('Molly', 6, 'SF');
+			addPerson('Mambo', 4, 'DEN');
+		});
+		
+		function listen(ref) {
+			ref.on('value', function(snap) { 
+				console.log(snap.val());
+			});
+		}
+		
+		function addPerson(name, age, location, weight) {
+			queryRef.push({
+				name: name,
+				age: age,
+				location: location
+			});
+		}
+			
+	</script>
+
+</body>
+
+</html>

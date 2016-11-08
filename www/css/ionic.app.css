@@ -1,4 +1,4 @@
-@charset "UTF-8";
+﻿@charset "UTF-8";
 /*
 To customize the look and feel of Ionic, you can override the variables
 in ionic's _variables.scss file.
@@ -28,8 +28,8 @@ $dark:                            #444 !default;
 */
 @font-face {
   font-family: "Ionicons";
-  src: url("../lib/ionic/fonts/ionicons.eot?v=2.0.1");
-  src: url("../lib/ionic/fonts/ionicons.eot?v=2.0.1#iefix") format("embedded-opentype"), url("../lib/ionic/fonts/ionicons.ttf?v=2.0.1") format("truetype"), url("../lib/ionic/fonts/ionicons.woff?v=2.0.1") format("woff"), url("../lib/ionic/fonts/ionicons.woff") format("woff"), url("../lib/ionic/fonts/ionicons.svg?v=2.0.1#Ionicons") format("svg");
+  src: url("../../lib/ionic/fonts/ionicons.eot?v=2.0.1");
+  src: url("../../lib/ionic/fonts/ionicons.eot?v=2.0.1#iefix") format("embedded-opentype"), url("../../lib/ionic/fonts/ionicons.ttf?v=2.0.1") format("truetype"), url("../../lib/ionic/fonts/ionicons.woff?v=2.0.1") format("woff"), url("../../lib/ionic/fonts/ionicons.woff") format("woff"), url("../../lib/ionic/fonts/ionicons.svg?v=2.0.1#Ionicons") format("svg");
   font-weight: normal;
   font-style: normal; }
 
@@ -14408,3 +14408,18 @@ a.button {
 /**
  * End Social youtube
  */
+.label {
+  color: #AAAAAA;
+  font-family: "Helvetica Neue", "Roboto", "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 400; }
+
+img.avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  vertical-align: middle; }
+
+ul.selector-dropdown {
+  position: initial; }
+

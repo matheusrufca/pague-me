@@ -5,10 +5,52 @@
 		</div>
 
 
+
+		<!-- list of user pending debts-->
+		<ion-list class="pending-debts">
+
+		</ion-list>
+
+
+
+		<!-- list of user debts-->
 		<ion-list>
-			<!-- list of user debts-->
-			<ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="debt in debts" type="item-text-wrap" href="#/debt/{{debt.id}}">
-				<h2>{{debt.value}}</h2>
+			<ion-item class="item item-divider">
+				Me devendo
+			</ion-item>
+			<ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="(key, item) in debts | creditors : user.id" type="item-text-wrap" href="#/debt/{{key}}">
+				<div class="row row-center">
+					<div class="col-20 text-center">
+						{{item.value | currency}}
+					</div>
+					<div class="col-40">
+						<img ng-src="{{item.debitor.photoURL}}" src="#" class="avatar"/>
+						{{item.debitor.name}}
+					</div>
+
+					<div class="col-40">
+						{{item.notes}}
+					</div>
+				</div>
+			</ion-item>
+
+			<ion-item class="item item-divider">
+				Devendo
+			</ion-item>
+			<ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="(key, item) in debts | debitors: user.id " type="item-text-wrap" href="#/debt/{{key}} ">
+				<div class="row row-center">
+					<div class="col-20 text-center">
+						{{item.value | currency}}
+					</div>
+					<div class="col-40">
+						<img ng-src="{{item.creditor.photoURL}}" src="#" class="avatar" />
+						{{item.creditor.name}}
+					</div>
+
+					<div class="col-40">
+						{{item.notes}}
+					</div>
+				</div>
 			</ion-item>
 		</ion-list>
 	</ion-content>

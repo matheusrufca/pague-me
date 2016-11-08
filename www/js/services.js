@@ -325,17 +325,70 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		return service;
 	}])
 
-	.factory('debtService', ['firebaseService', '$firebaseArray', 'userService', function (firebaseService, $firebaseArray, userService) {
+	.factory('debtService', ['$q', 'firebaseService', '$firebaseArray', 'userService', function ($q, firebaseService, $firebaseArray, userService) {
 		var self = {}, service = {};
 
-		self.debtsRef = null;
 		self.ref = 'debts';
+		self.debts = [];
 
 		self.init = function () {
-			self.debtsRef = firebaseService.ref(self.ref);
-
 			self.debts = service.getDebts();
 		};
+
+
+		service.findDebtsByUser = function (user_id) {
+			var deferred = $q.defer(), promise, queue;
+
+			queue = [self.findDebtsByCreditor(user_id), self.findDebtsByDebitor(user_id)];
+			promise = $q.all(queue);
+
+
+			promise.then(function (response) {
+				var result = angular.extend({}, response[0], response[1]);
+				deferred.resolve(result)
+			}, function (error) {
+				deferred.reject(error)
+			});
+
+			return deferred.promise;
+		};
+
+
+
+		self.findDebtsByCreditor = function (user_id) {
+			return _findDebtsByProperty('creditor/uid', user_id);
+		};
+
+		self.findDebtsByDebitor = function (user_id) {
+			return _findDebtsByProperty('debitor/uid', user_id);
+		};
+
+
+
+		function _findDebtsByProperty(property, user_id) {
+			var deferred = $q.defer();
+
+			// query by 'providerData/uid'
+			self.debts.$ref().orderByChild(property).equalTo(user_id).once("value", function (dataSnapshot) {
+				var debts = [];
+				if (dataSnapshot.exists()) {
+					var data = dataSnapshot.val();
+
+					debts = angular.forEach(data, function (item, key) {
+						item.id = key;
+						return item;
+					});
+					deferred.resolve(debts);
+				} else {
+					deferred.resolve([]);
+				}
+			});
+
+			return deferred.promise;
+		};
+
+
+
 
 
 
@@ -376,15 +429,6 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			return userDebts.concat(creditors || [], debitors || []);
 		};
 
-		//var uid = "simplelogin:1";
-		//var todosRef = new Firebase("https://yourdb.firebaseio.com/todos/" + uid);
-		//var privateTodosRef = todos.orderByChild("private").equalTo(true);
-		//var privateTodos;
-
-		//privateTodosRef.on("value", function (response) {
-		//	privateTodos = response.val();
-		//});
-
 
 		self.init();
 
@@ -398,18 +442,6 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			// Some other initializations related to debt
 		};
 
-
-		Debt.create = function (data) {
-			var debtData = {
-
-			};
-
-
-
-			return new Debt(debtData);
-		};
-
-
 		Debt.prototype = {
 			setData: function (debtData) {
 				angular.extend(this, debtData);
@@ -419,9 +451,9 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 
 				this.setData(record);
 			},
-			//toJSON: function () {
-			//	return JSON.stringify(this);
-			//}
+			toJSON: function () {
+				return angular.copy(this);
+			}
 		};
 
 		return Debt;
@@ -430,15 +462,15 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 
 	.factory("DebtMapper", ['Debt', 'userService', function (Debt, userService) {
 		Debt.create = function (data) {
-			var debtData,debitor, creditor;
+			var debtData, debitor, creditor;
 
 
 			if (data.isCreditor) {
-				debitor = data['_friend'];
-				creditor = data['_me'];
+				debitor = { uid: data['_friend'].uid, name: data['_friend'].name, photoURL: data['_me'].photoURL };
+				creditor = { uid: data['_me'].uid, name: data['_me'].name, photoURL: data['_me'].photoURL };
 			} else {
-				debitor = data['_me'];
-				creditor = data['_friend'];
+				debitor = { uid: data['_me'].uid, name: data['_me'].name, photoURL: data['_me'].photoURL };
+				creditor = { uid: data['_friend'].uid, name: data['_friend'].name, photoURL: data['_me'].photoURL };
 			}
 
 			debtData = {
@@ -446,8 +478,7 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 				notes: data.notes,
 				creditor: creditor,
 				debitor: debitor,
-				pending: true,
-				'_createdBy': data['_me']
+				pending: true
 			};
 
 
@@ -455,23 +486,38 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			return new Debt(debtData);
 		};
 
-
-		Debt.prototype = {
-			setData: function (debtData) {
-				angular.extend(this, debtData);
-			},
-			load: function (id) {
-				var record = debtService.get(id);
-
-				this.setData(record);
-			},
-			//toJSON: function () {
-			//	return JSON.stringify(this);
-			//}
-		};
-
 		return Debt;
-	}]);
+	}])
 
+	.filter('debitors', function () {
+	return function (source, search) {
+		if (!source) return source;
+		if (!search) return source;
 
+		var result = {};
 
+		angular.forEach(source, function (value, key) {
+			if (value.debitor.uid == search) {
+				result[key] = value;
+			}
+		});
+
+		return result;
+	}
+})
+	.filter('creditors', function () {
+		return function (source, search) {
+			if (!source) return source;
+			if (!search) return source;
+
+			var result = {};
+
+			angular.forEach(source, function (value, key) {
+				if (value.creditor.uid == search) {
+					result[key] = value;
+				}
+			});
+
+			return result;
+		}
+	});

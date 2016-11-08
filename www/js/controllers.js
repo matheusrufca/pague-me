@@ -1,23 +1,17 @@
 angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
-.controller('DashCtrl', function ($scope, $state, firebaseAuthService, facebookService, debtService) {
+.controller('DashCtrl', function ($rootScope, $scope, $timeout, $state, firebaseAuthService, facebookService, debtService) {
 	// With the new view caching in Ionic, Controllers are only called
 	// when they are recreated or on app start, instead of every page change.
 	// To listen for when this page is active (for example, to refresh data),
 	// listen for the $ionicView.enter event:
 	//
 	$scope.$on('$ionicView.beforeEnter', function (e) {
-		self.init();
-		console.log('entrou')
+		$timeout(self.init(), 100);
 	});
 
-
-
+	
 	var self = {};
-
-
-
-
 
 	$scope.debts = [];
 
@@ -34,7 +28,11 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 
 	$scope.getDebts = function () {
-		return debtService.getUserDebts($scope.user.uid);
+
+		debtService.findDebtsByUser($rootScope.user.uid).then(function (result) {
+			$scope.debts = result;
+		}, function (error) { });
+		//return debtService.getUserDebts($scope.user.uid);
 	};
 })
 
@@ -153,9 +151,6 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 			selectedFriend: null
 		};
 
-
-
-
 		self.init = function () {
 			$scope.debt = angular.copy(self.formDebt);
 			self.getFriends();
@@ -193,8 +188,8 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 			userService.findUserByFacebookId(formDebt.selectedFriend.id).then(function (appUser) {
 				debtData = angular.copy(formDebt);
-				debtData['_friend'] = appUser.uid;
-				debtData['_me'] = $rootScope.user.uid;
+				debtData['_friend'] = appUser;
+				debtData['_me'] = $rootScope.user;
 
 				debt = DebtMapper.create(debtData);
 
