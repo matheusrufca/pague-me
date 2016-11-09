@@ -1,6 +1,6 @@
 angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
-.controller('DashCtrl', function ($rootScope, $scope, $timeout, $state, firebaseAuthService, facebookService, debtService) {
+.controller('DashCtrl', function ($rootScope, $scope, $timeout, $filter, $state, firebaseAuthService, facebookService, debtService) {
 	// With the new view caching in Ionic, Controllers are only called
 	// when they are recreated or on app start, instead of every page change.
 	// To listen for when this page is active (for example, to refresh data),
@@ -10,10 +10,18 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 		$timeout(self.init(), 100);
 	});
 
-	
+
 	var self = {};
 
 	$scope.debts = [];
+
+
+
+
+
+	//TODO: bug on showing lenght pendingDebts length 
+	$scope.pendingDebtsLength = 0;
+
 
 
 	self.init = function () {
@@ -30,10 +38,68 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 	$scope.getDebts = function () {
 
 		debtService.findDebtsByUser($rootScope.user.uid).then(function (result) {
-			$scope.debts = result;
+			$scope.debts = Object.values(result);
 		}, function (error) { });
 		//return debtService.getUserDebts($scope.user.uid);
 	};
+
+
+
+
+	$scope.pendingDebts = function () {
+		var filtered = $filter('pending')($scope.debts, true) || [];
+		$scope.pendingDebtsLength = filtered.length;
+
+
+
+		return filtered;
+	};
+
+
+
+	$scope.accept = function (debt) {
+		debt.acceptedAt = new Date().getTime();
+		debt.pending = false;
+		self.save(debt);
+	};
+
+	$scope.refuse = function (debt) {
+		debt.refusedAt = new Date().getTime();
+		debt.pending = false;
+		self.update(debt);
+	};
+
+	$scope.pay = function (debt) {
+		debt.paid = true;
+		debt.paidAt =  new Date().getTime();
+
+		self.save(debt);
+	};
+
+
+
+	self.save = function (debt) {
+		debtService.save(debt).then(function (response) {
+			console.log(response);
+			//$scope.getDebts();
+		});;
+	};
+
+
+
+	//https://codepen.io/ionic/pen/uJkCz
+	//http://codepen.io/loringdodge/pen/zGWLQm
+	$scope.toggleItem = function (group) {
+		if ($scope.isItemShown(group)) {
+			$scope.shownItem = null;
+		} else {
+			$scope.shownItem = group;
+		}
+	};
+	$scope.isItemShown = function (group) {
+		return $scope.shownItem === group;
+	};
+
 })
 
 

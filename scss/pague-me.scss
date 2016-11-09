@@ -1,3 +1,26 @@
+.hidden-overflow {
+	text-rendering: optimizelegibility;
+	-ms-text-overflow: ellipsis;
+	-o-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.left {
+	float: left;
+}
+
+.right {
+	float: right;
+}
+
+.bold {
+	font-weight: bold;
+}
+
+
+
 .label {
 	color: #AAAAAA;
 	font-family: "Helvetica Neue", "Roboto", "Segoe UI", sans-serif;

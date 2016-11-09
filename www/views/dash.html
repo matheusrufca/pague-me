@@ -1,15 +1,54 @@
 ﻿<ion-view view-title="Dashboard">
 	<ion-content>
-		<div class="text-right">
+		<div class="text-right padding">
 			<a class="button button-icon assertive icon ion-plus-circled" href="#/debt/new"></a>
 		</div>
 
-
-
 		<!-- list of user pending debts-->
-		<ion-list class="pending-debts">
+		<ion-list class="pending-debts energized">
+			<ion-item class="item item-divider item-icon-left ">
+				Dívidas pendentes
+				<span class="badge badge-assertive" ng-bind="{{pendingDebtsLength}}"></span>
+			</ion-item>
+			<ion-item class="item-compact item-remove-animate item-energized" type="item-text-wrap"
+					  ng-repeat="item in pendingDebts() | debtFilter: { pending: true }" ng-click="toggleItem(item)">
+				<div class="row row-center">
+					<div class="col-10">
+						<i class="icon dark" ng-class="isItemShown(item) ? 'ion-minus' : 'ion-plus'"></i>
+					</div>
 
+					<div class="col-40 hidden-overflow">
+						<span class="padding-horizontal positive">
+							<img ng-src="{{item.debitor.photoURL}}" src="#" class="avatar" />
+							{{item.debitor.name}}
+						</span>
+
+					</div>
+
+					<div class="col-20 text-center assertive bold">
+						{{item.value | currency}}
+					</div>
+
+
+					<div class="col-20 text-right ">
+						<div class="button-bar">
+							<a class="button button-clear button-balanced ion-checkmark-round" ng-click="accept(item); $event.stopPropagation();"></a>
+							<a class="button button-clear button-assertive ion-close-round" ng-click="refuse(item); $event.stopPropagation();"></a>
+						</div>
+					</div>
+				</div>
+
+				<div class="row row-center" ng-show="isItemShown(item)">
+					<div class="col-67 box-note dark hidden-overflow">
+						{{item.notes}}
+					</div>
+					<div class="col-33 text-right stable hidden-overflow">
+						{{item.createdAt() | date}}
+					</div>
+				</div>
+			</ion-item>
 		</ion-list>
+
 
 
 
@@ -18,40 +57,140 @@
 			<ion-item class="item item-divider">
 				Me devendo
 			</ion-item>
-			<ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="(key, item) in debts | creditors : user.id" type="item-text-wrap" href="#/debt/{{key}}">
+
+
+			<ion-item class="item-compact item-accordion item-remove-animate" type="item-text-wrap"
+					  ng-repeat="item in debts | debtFilter: { creditor: user.uid, paid: false, refused: false } | orderBy: 'paid'" ng-click="toggleItem(item)">
 				<div class="row row-center">
-					<div class="col-20 text-center">
-						{{item.value | currency}}
+					<div class="col-10">
+						<i class="icon" ng-class="isItemShown(item) ? 'ion-minus' : 'ion-plus'"></i>
 					</div>
-					<div class="col-40">
-						<img ng-src="{{item.debitor.photoURL}}" src="#" class="avatar"/>
-						{{item.debitor.name}}
+					<div class="col-60 hidden-overflow">
+						<span class="padding-horizontal positive">
+							<img ng-src="{{item.debitor.photoURL}}" src="#" class="avatar" />
+							{{item.debitor.name}}
+						</span>
+
 					</div>
 
-					<div class="col-40">
-						{{item.notes}}
+					<div class="col-20 text-center assertive">
+						{{item.value | currency}}
+					</div>
+
+
+					<div class="col-10 text-center">
+						<button class="button button-icon balanced icon ion-checkmark-circled" ng-click="pay(item); $event.stopPropagation();"></button>
 					</div>
 				</div>
+				<ion-item class="item-accordion"
+						  ng-repeat="item in group.items"
+						  ng-show="isItemShown(group)">
+					{{item}}
+				</ion-item>
+				<div class="row row-center" ng-show="isItemShown(item)">
+					<div class="col-90 box-note hidden-overflow">
+						{{item.notes}}
+					</div>
+					<div class="col-10 text-center">
+						<a href="#/debt/{{item.id}}">Detalhes</a>
+					</div>
+				</div>			
 			</ion-item>
+			<style>
+				hr.dash {
+					width: 95%;
+					position:absolute;
+					color: #313131;
+				}
+			</style>
 
 			<ion-item class="item item-divider">
 				Devendo
 			</ion-item>
-			<ion-item class="item-remove-animate item-avatar item-icon-right" ng-repeat="(key, item) in debts | debitors: user.id " type="item-text-wrap" href="#/debt/{{key}} ">
+			<ion-item class="item-compact item-accordion item-remove-animate" type="item-text-wrap"
+					  ng-repeat="item in debts | debtFilter: { debitor: user.uid, paid: false, refused: false }" ng-click="toggleItem(item)">
 				<div class="row row-center">
-					<div class="col-20 text-center">
-						{{item.value | currency}}
+					<div class="col-10">
+						<i class="icon" ng-class="isItemShown(item) ? 'ion-minus' : 'ion-plus'"></i>
 					</div>
-					<div class="col-40">
-						<img ng-src="{{item.creditor.photoURL}}" src="#" class="avatar" />
-						{{item.creditor.name}}
+					<div class="col-60 hidden-overflow">
+						<span class="padding-horizontal positive">
+							<img ng-src="{{item.creditor.photoURL}}" src="#" class="avatar" />
+							{{item.creditor.name}}
+						</span>
+
 					</div>
 
-					<div class="col-40">
+					<div class="col-20 text-center assertive">
+						{{item.value | currency}}
+					</div>
+
+
+					<div class="col-10 text-center">
+						<button class="button button-icon balanced icon ion-checkmark-circled" ng-click="pay(item); $event.stopPropagation();"></button>
+					</div>
+				</div>
+				<ion-item class="item-accordion"
+						  ng-repeat="item in group.items"
+						  ng-show="isItemShown(group)">
+					{{item}}
+				</ion-item>
+				<div class="row row-center" ng-show="isItemShown(item)">
+					<div class="col-80 box-note hidden-overflow">
 						{{item.notes}}
+					</div>
+					<div class="col-20 text-center">
+						<a href="#/debt/{{item.id}}">Detalhes</a>
 					</div>
 				</div>
 			</ion-item>
 		</ion-list>
 	</ion-content>
+	<style>
+		img.avatar {
+			width: 30px;
+			height: 30px;
+			margin: 0 10px;
+		}
+
+		.item.item-compact {
+			padding-top: 0;
+			padding-bottom: 0;
+			font-size: 13px;
+		}
+
+		.item.item-small {
+			padding-top: 10px;
+			padding-bottom: 10px;
+			font-size: 14px;
+		}
+
+			.item.item-small > .row {
+				padding: 0;
+			}
+
+
+		.box-note {
+			margin: 5px;
+			padding: 5px;
+			background-color: #FAFAFA;
+			border-radius: 5px;
+		}
+
+
+		.list .item.item-accordion {
+			padding-top: 0;
+			padding-bottom: 0;
+			transition: 0.09s all linear;
+		}
+
+			.list .item.item-accordion.ng-hide {
+				line-height: 0px;
+			}
+
+			.list .item.item-accordion.ng-hide-add,
+			.list .item.item-accordion.ng-hide-remove {
+				display: block !important;
+			}
+	</style>
 </ion-view>
