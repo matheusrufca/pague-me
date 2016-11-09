@@ -60,7 +60,7 @@
 
 
 			<ion-item class="item-compact item-accordion item-remove-animate" type="item-text-wrap"
-					  ng-repeat="item in debts | debtFilter: { creditor: user.uid, paid: false, refused: false } | orderBy: 'paid'" ng-click="toggleItem(item)">
+					  ng-repeat="item in debts | debtFilter: { creditor: user.uid }" ng-click="toggleItem(item)">
 				<div class="row row-center">
 					<div class="col-10">
 						<i class="icon" ng-class="isItemShown(item) ? 'ion-minus' : 'ion-plus'"></i>
@@ -108,7 +108,7 @@
 				Devendo
 			</ion-item>
 			<ion-item class="item-compact item-accordion item-remove-animate" type="item-text-wrap"
-					  ng-repeat="item in debts | debtFilter: { debitor: user.uid, paid: false, refused: false }" ng-click="toggleItem(item)">
+					  ng-repeat="item in debts | debtFilter: { debitor: user.uid }" ng-click="toggleItem(item)">
 				<div class="row row-center">
 					<div class="col-10">
 						<i class="icon" ng-class="isItemShown(item) ? 'ion-minus' : 'ion-plus'"></i>

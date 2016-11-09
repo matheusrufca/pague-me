@@ -555,6 +555,7 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			//default filter setting
 			defaultFilters = {
 				pending: false,
+				paid: false,
 				refusedAt: null
 			};
 
