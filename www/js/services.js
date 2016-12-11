@@ -61,20 +61,14 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 
 
 		self.facebookSignIn = function () {
-			var dfSignIn, fbProvider
-
-			provider = new firebase.auth.FacebookAuthProvider();
-			provider.addScope('user_friends');
-
-			dfSignIn = auth.$signInWithPopup(provider);
+			var dfSignIn = auth.$signInWithPopup("facebook", { scope: "email,user_friends" });
 
 			dfSignIn.then(function (firebaseUser) {
 				var user = angular.extend(firebaseUser.user.toJSON(), { credential: firebaseUser.credential });
 
 				$rootScope.$broadcast('auth.stateChanged', user);
 
-				//var a = [firebaseUser, auth.$getAuth()]
-				//console.log(provider.credential());
+				var a = [firebaseUser, auth.$getAuth()]
 
 				//console.log(JSON.stringify(a));
 			}).catch(function (error) {
