@@ -45,12 +45,10 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 
 
 
-
 	$scope.pendingDebts = function () {
 		var filtered = $filter('pending')($scope.debts, true) || [];
+
 		$scope.pendingDebtsLength = filtered.length;
-
-
 
 		return filtered;
 	};
@@ -223,10 +221,6 @@ angular.module('starter.controllers', ['starter.services', 'ngOpenFB'])
 		};
 
 		$scope.availableFriends = [{}];
-
-
-
-
 
 		self.getFriends = function () {
 			facebookService.getFriends().then(

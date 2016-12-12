@@ -1,61 +1,62 @@
 angular.module('starter.services', ['ngOpenFB'])
+	.factory('Chats', function () {
+		// Might use a resource here that returns a JSON array
 
-.factory('Chats', function () {
-	// Might use a resource here that returns a JSON array
-
-	// Some fake testing data
-	var chats = [{
-		id: 0,
-		name: 'Ben Sparrow',
-		lastText: 'You on your way?',
-		face: 'img/ben.png'
-	}, {
-		id: 1,
-		name: 'Max Lynx',
-		lastText: 'Hey, it\'s me',
-		face: 'img/max.png'
-	}, {
-		id: 2,
-		name: 'Adam Bradleyson',
-		lastText: 'I should buy a boat',
-		face: 'img/adam.jpg'
-	}, {
-		id: 3,
-		name: 'Perry Governor',
-		lastText: 'Look at my mukluks!',
-		face: 'img/perry.png'
-	}, {
-		id: 4,
-		name: 'Mike Harrington',
-		lastText: 'This is wicked good ice cream.',
-		face: 'img/mike.png'
-	}];
-
-	return {
-		all: function () {
-			return chats;
-		},
-		remove: function (chat) {
-			chats.splice(chats.indexOf(chat), 1);
-		},
-		get: function (chatId) {
-			for (var i = 0; i < chats.length; i++) {
-				if (chats[i].id === parseInt(chatId)) {
-					return chats[i];
-				}
+		// Some fake testing data
+		var chats = [
+			{
+				id: 0,
+				name: 'Ben Sparrow',
+				lastText: 'You on your way?',
+				face: 'img/ben.png'
+			}, {
+				id: 1,
+				name: 'Max Lynx',
+				lastText: 'Hey, it\'s me',
+				face: 'img/max.png'
+			}, {
+				id: 2,
+				name: 'Adam Bradleyson',
+				lastText: 'I should buy a boat',
+				face: 'img/adam.jpg'
+			}, {
+				id: 3,
+				name: 'Perry Governor',
+				lastText: 'Look at my mukluks!',
+				face: 'img/perry.png'
+			}, {
+				id: 4,
+				name: 'Mike Harrington',
+				lastText: 'This is wicked good ice cream.',
+				face: 'img/mike.png'
 			}
-			return null;
-		}
-	};
-})
+		];
+
+		return {
+			all: function () {
+				return chats;
+			},
+			remove: function (chat) {
+				chats.splice(chats.indexOf(chat), 1);
+			},
+			get: function (chatId) {
+				for (var i = 0; i < chats.length; i++) {
+					if (chats[i].id === parseInt(chatId)) {
+						return chats[i];
+					}
+				}
+				return null;
+			}
+		};
+	});
 
 
-angular.module('pague-me.services', ['ngStorage', 'firebase'])
+angular.module('pm.services', ['ngStorage', 'firebase'])
 	.constant('firebaseConfig', {
 		'url': "https://pague-me.firebaseio.com",
 		'ref': function (path) { return firebase.database().ref(path); }
 	})
-	.service('firebaseAuthService', ['$rootScope', 'firebaseConfig', '$firebaseAuth', function ($rootScope, firebaseConfig, $firebaseAuth) {
+	.service('firebaseAuthService', ['$rootScope', 'firebaseConfig', '$firebaseAuth', function ($rootScope, firebaseConfig, $firebaseAuth, User) {
 		var self = this;
 		var auth = $firebaseAuth();
 
@@ -66,9 +67,9 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			dfSignIn.then(function (firebaseUser) {
 				var user = angular.extend(firebaseUser.user.toJSON(), { credential: firebaseUser.credential });
 
-				$rootScope.$broadcast('auth.stateChanged', user);
+				$rootScope.$broadcast('auth.stateChanged', new User(user));
 
-				var a = [firebaseUser, auth.$getAuth()]
+				var a = [firebaseUser, auth.$getAuth()];
 
 				//console.log(JSON.stringify(a));
 			}).catch(function (error) {
@@ -139,7 +140,7 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		var authData = null;
 
 		self.login = function () {
-			return ngFB.login({ scope: 'user_friends' })
+			return ngFB.login({ scope: 'user_friends' });
 		};
 
 		self.logout = function () {
@@ -244,15 +245,32 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			// Some other initializations related to user
 		};
 
-
-		User.createFacebookUser = function (userData) {
-			return _mapFacebookUserObject(userData);
-		};
-
 		User.prototype = {
 			setData: function (data) {
 				angular.extend(this, data);
+			},
+			getPicture: function () {
+				var _this = this;
+				var pictureUrl, provider;
+
+				provider = _this.providerData ? _this.providerData.provider : null;
+
+				switch (provider) {
+					case 'facebook.com':
+						var facebookId = _this.providerData.uid;
+						pictureUrl = ['https://graph.facebook.com/', facebookId, '/picture?type=square'].join('');
+						break;
+					default:
+						pictureUrl = _this.photoURL;
+						break;
+				}
+
+				return pictureUrl;
 			}
+		};
+
+		User.createFacebookUser = function (userData) {
+			return _mapFacebookUserObject(userData);
 		};
 
 		return User;
@@ -260,7 +278,7 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 	.factory('userService', ['$rootScope', '$q', '$localStorage', '$firebaseObject', '$firebaseArray', 'firebaseService', 'User', function ($rootScope, $q, $localStorage, $firebaseObject, $firebaseArray, firebaseService, User) {
 		var self = {}, service = {};
 
-		self.ref = 'users'
+		self.ref = 'users';
 
 		self.users = [];
 
@@ -286,13 +304,12 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 			return deferred.promise;
 		};
 
-
 		service.getUsers = function () {
 			return firebaseService.queryCollection('users');
 		};
 
 		service.addUser = function (user) {
-			var usersSet = self.users.$ref().child(user.uid)
+			var usersSet = self.users.$ref().child(user.uid);
 
 			usersSet.set(user).then(function (response) {
 				console.debug(response);
@@ -319,6 +336,7 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 				delete window.localStorage['user'];
 			}
 		});
+
 
 
 		self.init();
@@ -442,6 +460,20 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 		};
 
 
+
+		service.fixProfilePictures = function () {
+			var usersList = service.getUsers();
+
+			usersList.$loaded().then(function (result) {
+				angular.forEach(result, function (item, i) {
+					var facebookId = item.providerData.uid;
+					item.picture = ['https://graph.facebook.com/', facebookId, '/picture?type=square'].join('');
+					usersList.$save(item);
+				});
+			});
+		};
+
+
 		self.init();
 
 		return service;
@@ -470,17 +502,17 @@ angular.module('pague-me.services', ['ngStorage', 'firebase'])
 	})
 
 
-	.factory("DebtMapper", ['Debt', 'userService', function (Debt, userService) {
+	.factory("DebtMapper", ['Debt', function (Debt) {
 		Debt.create = function (data) {
 			var debtData, debitor, creditor;
 
 
 			if (data.isCreditor) {
-				debitor = { uid: data['_friend'].uid, name: data['_friend'].name, photoURL: data['_me'].photoURL };
+				debitor = { uid: data['_friend'].uid, name: data['_friend'].name, photoURL: data['_friend'].photoURL };
 				creditor = { uid: data['_me'].uid, name: data['_me'].name, photoURL: data['_me'].photoURL };
 			} else {
 				debitor = { uid: data['_me'].uid, name: data['_me'].name, photoURL: data['_me'].photoURL };
-				creditor = { uid: data['_friend'].uid, name: data['_friend'].name, photoURL: data['_me'].photoURL };
+				creditor = { uid: data['_friend'].uid, name: data['_friend'].name, photoURL: data['_friend'].photoURL };
 			}
 
 			debtData = {

@@ -5,8 +5,11 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'ngStorage', 'ngOpenFB', 'firebase', 'selector', 'ui.utils.masks', 'querybase', 'pague-me.services'])
-
+angular.module('starter',
+	[
+		'ionic', 'starter.controllers', 'starter.services', 'ngStorage', 'ngOpenFB', 'firebase', 'selector', 'ui.utils.masks',
+		'querybase', 'pm.services'
+	])
 	.config(function ($stateProvider, $urlRouterProvider) {
 
 		// Ionic uses AngularUI Router which uses the concept of states
@@ -15,26 +18,28 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 		// Each state's controller can be found in controllers.js
 		$stateProvider
 
-		// setup an abstract state for the tabs directive
-		  .state('tab', {
-		  	url: '',
-		  	abstract: true,
-		  	templateUrl: 'templates/tabs.html',
-		  	controller: 'TabsController'
-		  })
+			// setup an abstract state for the tabs directive
+			.state('tab',
+			{
+				url: '',
+				abstract: true,
+				templateUrl: 'templates/tabs.html',
+				controller: 'TabsController'
+			})
 
-		// Each tab has its own nav history stack:
-
-		.state('tab.dash', {
-			url: '/dash',
-			views: {
-				'dash': {
-					templateUrl: 'views/dash.html',
-					controller: 'DashCtrl'
+			// Each tab has its own nav history stack:
+			.state('tab.dash',
+			{
+				url: '/dash',
+				views: {
+					'dash': {
+						templateUrl: 'views/dash.html',
+						controller: 'DashCtrl'
+					}
 				}
-			}
-		})
-			.state('tab.debt-new', {
+			})
+			.state('tab.debt-new',
+			{
 				url: '/debt/new',
 				views: {
 					'dash': {
@@ -52,18 +57,18 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 			//		}
 			//	}
 			//})
-
-
-		.state('tab.chats', {
-			url: '/chats',
-			views: {
-				'tab-chats': {
-					templateUrl: 'templates/tab-chats.html',
-					controller: 'ChatsCtrl'
+			.state('tab.chats',
+			{
+				url: '/chats',
+				views: {
+					'tab-chats': {
+						templateUrl: 'templates/tab-chats.html',
+						controller: 'ChatsCtrl'
+					}
 				}
-			}
-		})
-			.state('tab.chat-detail', {
+			})
+			.state('tab.chat-detail',
+			{
 				url: '/chats/:chatId',
 				views: {
 					'tab-chats': {
@@ -72,93 +77,90 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 					}
 				}
 			})
-
-		.state('tab.account', {
-			url: '/account',
-			views: {
-				'tab-account': {
-					templateUrl: 'templates/tab-account.html',
-					controller: 'AccountCtrl'
+			.state('tab.account',
+			{
+				url: '/account',
+				views: {
+					'tab-account': {
+						templateUrl: 'templates/tab-account.html',
+						controller: 'AccountCtrl'
+					}
 				}
-			}
-		})
-
-		.state('tab.login', {
-			url: '/login',
-			views: {
-				'tab-login': {
-					templateUrl: 'views/login.html',
-					controller: 'LoginController'
+			})
+			.state('tab.login',
+			{
+				url: '/login',
+				views: {
+					'tab-login': {
+						templateUrl: 'views/login.html',
+						controller: 'LoginController'
+					}
 				}
-			}
-		})
-
-
-
-		.state('tab.profile', {
-			url: '/profile',
-			views: {
-				'tab-profile': {
-					templateUrl: 'views/profile.html',
-					controller: 'ProfileController'
+			})
+			.state('tab.profile',
+			{
+				url: '/profile',
+				views: {
+					'tab-profile': {
+						templateUrl: 'views/profile.html',
+						controller: 'ProfileController'
+					}
 				}
-			}
-		});
+			});
 
 		// if none of the above states are matched, use this as the fallback
 		$urlRouterProvider.otherwise('/dash');
 
 	})
-
 	.config(function ($provide) {
-		$provide.decorator('$firebaseArray', function ($delegate, $window) {
-			var add, timestamp, currentUser;
+		$provide.decorator('$firebaseArray',
+			function ($delegate, $window) {
+				var add, timestamp, currentUser;
 
-			add = $delegate.prototype.$add;
+				add = $delegate.prototype.$add;
 
-			$delegate.prototype.$add = function (newData) {
-				try {
-					timestamp = new Date().getTime();
-					currentUser = $window.firebase.auth().currentUser.uid;
-				} catch (err) { }
+				$delegate.prototype.$add = function (newData) {
+					try {
+						timestamp = new Date().getTime();
+						currentUser = $window.firebase.auth().currentUser.uid;
+					} catch (err) {
+					}
 
-				//works if remove '_'
-				newData['_createdAt'] = timestamp;
-				newData['_createdBy'] = currentUser;
+					//works if remove '_'
+					newData['_createdAt'] = timestamp;
+					newData['_createdBy'] = currentUser;
 
-				return add.call(this, newData);
-			};
+					return add.call(this, newData);
+				};
 
-			return $delegate;
-		});
+				return $delegate;
+			});
 	})
-
 	.config(function ($provide) {
-		$provide.decorator('$firebaseObject', function ($delegate, $window) {
-			var save, timestamp, currentUser;
+		$provide.decorator('$firebaseObject',
+			function ($delegate, $window) {
+				var save, timestamp, currentUser;
 
-			save = $delegate.prototype.$save;
+				save = $delegate.prototype.$save;
 
 
+				$delegate.prototype.$save = function () {
+					try {
+						timestamp = new Date().getTime();
+						currentUser = $window.firebase.auth().currentUser.uid;
+					} catch (err) {
+					}
 
-			$delegate.prototype.$save = function () {
-				try {
-					timestamp = new Date().getTime();
-					currentUser = $window.firebase.auth().currentUser.uid;
-				} catch (err) { }
+					//works if remove '.'
+					this['.modifiedAt'] = timestamp;
+					this['.modifiedBy'] = currentUser;
 
-				//works if remove '.'
-				this['.modifiedAt'] = timestamp;
-				this['.modifiedBy'] = currentUser;
+					return save.call(this);
+				};
 
-				return save.call(this);
-			};
-
-			return $delegate;
-		});
+				return $delegate;
+			});
 	})
-
-
 	.run(function ($ionicPlatform, ngFB) {
 		$ionicPlatform.ready(function () {
 			// Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -186,7 +188,8 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 
 				sessionUser = JSON.parse(window.localStorage['user']);
 				sessionUser = JSON.parse($localStorage.user);
-			} catch (err) { }
+			} catch (err) {
+			}
 
 
 			if (sessionUser) {
@@ -202,6 +205,9 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
 
 		restoreUserContext();
 	})
+	.run(function (userService) {
+		//DO FIXES
+	});
 
 
 
